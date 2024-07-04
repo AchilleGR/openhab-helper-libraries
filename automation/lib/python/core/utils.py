@@ -22,7 +22,10 @@ import uuid
 
 from org.openhab.core.types import TypeParser
 from org.openhab.core.thing import ChannelUID
-from org.joda.time import DateTime as JodaDateTime
+try:
+    from org.joda.time import DateTime as JodaDateTime
+except:
+    JodaDateTime = None
 from java.time import ZonedDateTime
 from core.date import to_java_zoneddatetime, to_joda_datetime
 from core.log import getLogger
