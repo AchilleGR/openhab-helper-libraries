@@ -13,5 +13,5 @@ The original community libraries, script examples, and docs are included, but ar
 ```bash
 wget 'https://github.com/MiningMarsh/openhab-helper-libraries/archive/main.zip'
 unzip main.zip
-cp -r main/* /etc/openhab/conf/automation/
+cp -r main/* /etc/openhab/conf/
 ```
