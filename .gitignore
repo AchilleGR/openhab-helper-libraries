@@ -35,7 +35,7 @@
 /rules/**
 /typings/*
 !/typings/core
-/transform
+/transform/**
 /html/**
 /icons/**
 /things/**
