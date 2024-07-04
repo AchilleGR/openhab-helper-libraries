@@ -1,5 +1,5 @@
+import core.oh.items
 from . import log
-from .oh import items
 
 
 class Prop(object):
@@ -26,14 +26,14 @@ class Prop(object):
     
     @property
     def exists(self):
-        return items.item_exists(self.__item)
+        return core.oh.items.item_exists(self.__item)
 
     @property
     def value(self):
         if self.__normalize:
-            return items.item(self.__item, default=self.__default) / 100.0
+            return core.oh.items.item(self.__item, default=self.__default) / 100.0
         else:
-            return items.item(self.__item, default=self.__default)
+            return core.oh.items.item(self.__item, default=self.__default)
         
     @value.setter
     def value(self, value):
@@ -42,16 +42,16 @@ class Prop(object):
     def command(self, value, force=False):
         if self.exists:
             if self.__normalize:
-                items.command(self.__item, value * 100.0, force=force)
+                core.oh.items.command(self.__item, value * 100.0, force=force)
             else:
-                items.command(self.__item, value, force=force)
+                core.oh.items.command(self.__item, value, force=force)
 
     def update(self, value, force=False):
         if self.exists:
             if self.__normalize:
-                items.update(self.__item, value * 100.0, force=force)
+                core.oh.items.update(self.__item, value * 100.0, force=force)
             else:
-                items.update(self.__item, value, force=force)
+                core.oh.items.update(self.__item, value, force=force)
 
     def on_change(self, pass_context=False, null_context=False, trace=None):
         if self.exists:
@@ -128,7 +128,7 @@ class Prop(object):
         if not self.exists:
             return None
 
-        return items.item_type(self.__item)
+        return core.oh.items.item_type(self.__item)
 
     @property
     def trace(self):

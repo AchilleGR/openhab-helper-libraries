@@ -1,5 +1,6 @@
 import importlib
 import core.log
+import core.oh.items
 
 import configuration
 
@@ -7,7 +8,6 @@ from . import ruleengine
 from . import prop
 from . import devices
 from . import log
-from .oh import items
 
 
 collections = [
@@ -48,7 +48,7 @@ class Manager(object):
     @property
     def rooms(self):
         already_emitted = set()
-        for item_name in items.items():
+        for item_name in core.oh.items.items():
             item_name_parts = item_name.split('_')
             if len(item_name_parts) != 4:
                 continue
@@ -74,7 +74,7 @@ class Manager(object):
 
     def devices_for(self, device_class, device_collection='Builtin', room_name=None, device_name=None, suppress_rules=True):
         already_emitted = set()
-        for item_name in items.items():
+        for item_name in core.oh.items.items():
             item_name_parts = item_name.split('_')
             if device_collection == 'Builtin':
                 if len(item_name_parts) != 4:

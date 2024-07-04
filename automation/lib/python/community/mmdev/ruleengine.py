@@ -2,11 +2,9 @@ import uuid
 import random
 import contextlib
 import core.log
+import core.oh.rules
 
 from . import log
-from .oh import items
-from .oh import rules
-from .oh import types
 from . import utils
 from . import prop
 
@@ -71,7 +69,7 @@ class RuleEngine(object):
                     return func()
             return outer
             
-        return lambda func: rules.cron('%s * * ? * * *' % self.__seconds_index)(wrapper(func))
+        return lambda func: core.oh.rules.cron('%s * * ? * * *' % self.__seconds_index)(wrapper(func))
 
     def every_day(self, hour, minute, trace=None):
         self.__crons += 1
@@ -82,7 +80,7 @@ class RuleEngine(object):
                     return func()
             return outer
             
-        return lambda func: rules.rule('0 %s %s ? * * *' % (minute, hour))(wrapper(func))
+        return lambda func: core.oh.rules.rule('0 %s %s ? * * *' % (minute, hour))(wrapper(func))
 
     def on_weekdays(self, hour, minute, trace=None):
         self.__crons += 1
@@ -93,7 +91,7 @@ class RuleEngine(object):
                     return func()
             return outer
             
-        return lambda func: rules.rule('0 %s %s ? * MON,TUE,WED,THU,FRI *' % (minute, hour))(wrapper(func))
+        return lambda func: cpre.oh.rules.rule('0 %s %s ? * MON,TUE,WED,THU,FRI *' % (minute, hour))(wrapper(func))
 
     def on_weekends(self, hour, minute, trace=None):
         self.__crons += 1
@@ -104,7 +102,7 @@ class RuleEngine(object):
                     return func()
             return outer
             
-        return lambda func: rules.rule('0 %s %s ? * SAT,SUN *' % (minute, hour))(wrapper(func))
+        return lambda func: core.oh.rules.rule('0 %s %s ? * SAT,SUN *' % (minute, hour))(wrapper(func))
 
     def on_change(self, prop, pass_context=False, null_context=False, trace=None):
         self.__changes += 1
@@ -115,7 +113,7 @@ class RuleEngine(object):
                     return func(*args)
             return outer
             
-        return lambda func: rules.on_change(prop.item, pass_context, null_context)(wrapper(func))
+        return lambda func: core.oh.rules.on_change(prop.item, pass_context, null_context)(wrapper(func))
 
     def on_command(self, prop, pass_context=False, trace=None):
         self.__commands += 1
@@ -126,7 +124,7 @@ class RuleEngine(object):
                     return func(*args)
             return outer
             
-        return lambda func: rules.on_command(prop.item, pass_context)(wrapper(func))
+        return lambda func: core.oh.rules.on_command(prop.item, pass_context)(wrapper(func))
 
     def on_update(self, prop, pass_context=False, trace=None):
         self.__updates += 1
@@ -137,7 +135,7 @@ class RuleEngine(object):
                     return func(*args)
             return outer
             
-        return lambda func: rules.on_update(prop.item, pass_context)(wrapper(func))
+        return lambda func: core.oh.rules.on_update(prop.item, pass_context)(wrapper(func))
 
     def performance_trace(self):
         if not self.__trace:
