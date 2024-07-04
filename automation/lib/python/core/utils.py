@@ -20,23 +20,10 @@ __all__ = [
 import re
 import uuid
 
-try:
-    from org.eclipse.smarthome.core.types import TypeParser
-except:
-    from org.openhab.core.types import TypeParser
-
-try:
-    from org.openhab.core.thing import ChannelUID
-except:
-    from org.eclipse.smarthome.core.thing import ChannelUID
-
-try:
-    from org.joda.time import DateTime as JodaDateTime
-except:
-    JodaDateTime = None
-
+from org.openhab.core.types import TypeParser
+from org.openhab.core.thing import ChannelUID
+from org.joda.time import DateTime as JodaDateTime
 from java.time import ZonedDateTime
-
 from core.date import to_java_zoneddatetime, to_joda_datetime
 from core.log import getLogger
 from core.jsr223.scope import itemRegistry, StringType, NULL, UNDEF, ON, OFF, OPEN, CLOSED, events, things
@@ -182,14 +169,6 @@ def send_command_if_different(item_or_item_name, new_value, floatPrecision=None)
     See postUpdateCheckFirst
     """
     return postUpdateCheckFirst(item_or_item_name, new_value, sendACommand=True, floatPrecision=floatPrecision)
-
-
-# for backwards compatibility
-postUpdateCheckFirst = post_update_if_different
-
-
-# for backwards compatibility
-sendCommandCheckFirst = send_command_if_different
 
 
 def kw(dictionary, value):

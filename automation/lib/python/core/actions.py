@@ -28,21 +28,13 @@ for action in OH1_ACTIONS + OH2_ACTIONS:
     setattr(_MODULE, name, action_class)
     __all__.append(name)
 
-try:
-    from org.openhab.core.model.script.actions import Exec
-    from org.openhab.core.model.script.actions import HTTP
-    from org.openhab.core.model.script.actions import Ping
-    from org.openhab.core.model.script.actions import ScriptExecution
-    from org.openhab.core.model.script.actions import Transformation
-except:
-    from org.eclipse.smarthome.model.script.actions import Exec
-    from org.eclipse.smarthome.model.script.actions import HTTP
-    from org.eclipse.smarthome.model.script.actions import Ping
-    from org.eclipse.smarthome.model.script.actions import ScriptExecution
+from org.openhab.core.model.script.actions import Exec
+from org.openhab.core.model.script.actions import HTTP
+from org.openhab.core.model.script.actions import Ping
+from org.openhab.core.model.script.actions import ScriptExecution
+from org.openhab.core.model.script.actions import Transformation
 
 try:
-    # OH3
-    
     from org.openhab.core.model.script.actions import Log
     LogAction = Log
 except:
@@ -56,7 +48,7 @@ except:
         Log = LogAction
 
 
-STATIC_IMPORTS = [Exec, HTTP, Log, LogAction, Ping, ScriptExecution]
+STATIC_IMPORTS = [Exec, HTTP, Log, LogAction, Ping, ScriptExecution, Transformation]
 
 for action in STATIC_IMPORTS:
     name = str(action.simpleName)
