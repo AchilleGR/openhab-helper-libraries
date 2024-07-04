@@ -4,35 +4,60 @@ This trigger can respond to file system changes. For example, you could watch a
 directory for new files and then process them.
 """
 from java.nio.file.StandardWatchEventKinds import ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY
-from org.openhab.core.automation.handler import TriggerHandler
-from org.openhab.core.service import WatchServiceFactory
+
+try:
+    scriptExtension.importPreset(None)# fix for compatibility with Jython > 2.7.0
+except:
+    pass
+
+try:
+    from org.openhab.core.automation.handler import TriggerHandler
+except:
+    from org.eclipse.smarthome.automation.handler import TriggerHandler
+
+try:
+    try:
+        from org.openhab.core.service import AbstractWatchService
+    except:
+        from org.eclipse.smarthome.core.service import AbstractWatchService
+    BASE_CLASS = AbstractWatchService
+    WatchServiceFactory = None
+except:
+    from org.openhab.core.automation.handler import TriggerHandler
+    from org.openhab.core.service import WatchServiceFactory
+    BASE_CLASS = object
 
 import core
 from core.log import getLogger, log_traceback
 
+
 LOG = getLogger("core.DirectoryEventTrigger")
 core.DIRECTORY_TRIGGER_MODULE_ID = "jsr223.DirectoryEventTrigger"
+
 
 scriptExtension.importPreset("RuleSimple")
 scriptExtension.importPreset("RuleSupport")
 scriptExtension.importPreset("RuleFactories")
 
 
-class JythonDirectoryWatcher(object):
+class JythonDirectoryWatcher(BASE_CLASS):
 
     def __init__(self, path, event_kinds=[ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY], watch_subdirectories=False):
-        self.path = path
+        if BASE_CLASS is not object:
+            BASE_CLASS.__init__(self, path)
+
+        self.__watcher = None
         self.event_kinds = event_kinds
         self.watch_subdirectories = watch_subdirectories
         self.callback = None
-        self.__watcher = None
 
     def deactivate(self):
         if self.__watcher is not None:
             self.__watcher.unregisterListener(self)
+            self.__watcher = None
 
     def activate(self):
-        if self.__watcher is not None:
+        if BASE_CLASS is not object or self.__watcher is not None:
             return
         self.__watcher = WatchServiceFactory.createWatchService(
             core.DIRECTORY_TRIGGER_MODULE_ID,
@@ -48,7 +73,7 @@ class JythonDirectoryWatcher(object):
 
     @log_traceback
     def processWatchEvent(self, event, kind, path):
-        if kind in self.event_kinds and self.callback is not None:
+        if self.callback is not None and kind in self.event_kinds:
             self.callback(event, kind, path)
 
 
@@ -65,10 +90,8 @@ class _DirectoryEventTriggerHandlerFactory(TriggerHandlerFactory):
             self.trigger = trigger
             config = trigger.configuration
             self.watcher = JythonDirectoryWatcher(
-                config.get('path'), 
-                eval(config.get('event_kinds')),
-                watch_subdirectories=config.get('watch_subdirectories')
-            )
+                config.get('path'), eval(config.get('event_kinds')),
+                watch_subdirectories=config.get('watch_subdirectories'))
             self.watcher.callback = self.handle_directory_event
             self.watcher.activate()
 
