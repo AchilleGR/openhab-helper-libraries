@@ -10,6 +10,12 @@
 /automation/jython/**
 /automation/js/**
 /js/**
+!/automation/jsr223/python/personal/.gitkeep
+!/automation/jsr223/javascript/personal/.gitkeep
+!/automation/jsr223/groovy/personal/.gitkeep
+!/automation/lib/python/personal/.gitkeep
+!/automation/lib/javascript/personal/.gitkeep
+!/automation/lib/groovy/personal/.gitkeep
 
 # VSCode settings
 .vscode/

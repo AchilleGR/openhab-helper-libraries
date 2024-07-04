@@ -1,5 +1,5 @@
-from core.jsr223.scope import UnDefType, QuantityType, DecimalType, PercentType, ON, OFF, OnOffType, HSBType
 import collections
+from core.jsr223.scope import UnDefType, QuantityType, DecimalType, PercentType, ON, OFF, OnOffType, HSBType
 
 
 Type = collections.namedtuple(
@@ -90,13 +90,16 @@ def from_color(value):
         round(value.getBrightness().doubleValue() / 100.0, _PRECISION)
     )
 
+
 def is_onoff(value):
     return isinstance(value, OnOffType)
+
 
 def to_onoff(value):
     if value:
         return ON
     return OFF
+
 
 def from_onoff(value):
     return value == ON
@@ -135,7 +138,6 @@ def is_equal(left_value, right_value):
     for is_func, _, from_func in TYPES:
         if is_func(left_value) and is_func(right_value):
             return from_func(left_value) == from_func(right_value)
-
     return False
 
 
