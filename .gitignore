@@ -33,7 +33,7 @@
 /services/**
 /scripts/**
 /rules/**
-/transform
+/transform/**
 /html/**
 /icons/**
 /things/**
