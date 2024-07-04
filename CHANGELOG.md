@@ -7,3 +7,4 @@ Jul 4, 2024
 -----------
 - Fork of repository.
 - Repaired `100_DirectoryTrigger.py`, scripts now hot-reload again.
+- Check cron expressions with CronAdjuster if it is available.

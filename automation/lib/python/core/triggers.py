@@ -107,10 +107,19 @@ def when(target):
     try:
         from org.quartz.CronExpression import isValidExpression
     except:
-        # Quartz is removed in OH3, this needs to either impliment or match
-        # functionality in `org.openhab.core.internal.scheduler.CronAdjuster`
         def isValidExpression(expr):
-            import re
+            try:
+                try:
+                    from org.openhab.core.scheduler import CronAdjuster
+                except:
+                    from openhab.core.internal.scheduler import CronAdjuster
+                try:
+                    CronAdjuster(expr)
+                    return True
+                except:
+                    return False
+            except:
+                import re
 
             expr = expr.strip()
             if expr.startswith("@"):
