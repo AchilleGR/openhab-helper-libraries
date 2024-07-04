@@ -144,7 +144,6 @@ class Manager(object):
 
             if register is not None:
                 core.log.log_traceback(lambda: register())()
-        self.__rule_engine.performance_trace()
 
     def state_for(self, state_name, force=False, default=None, **kwargs):
         full_name = 'State_%s' % state_name 
@@ -163,6 +162,3 @@ class Manager(object):
     @property
     def rule_engine(self):
         return self.__rule_engine
-
-    def status(self):
-        self.__rule_engine.status()
