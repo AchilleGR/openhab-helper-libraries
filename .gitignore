@@ -33,8 +33,6 @@
 /services/**
 /scripts/**
 /rules/**
-/typings/*
-!/typings/core
 /transform/**
 /html/**
 /icons/**
