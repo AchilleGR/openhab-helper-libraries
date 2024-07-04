@@ -1,13 +1,13 @@
 *.py[cod]
 *$py.class
-Core/automation/jsr223/python/personal/**
-Core/automation/jsr223/javascript/personal/**
-Core/automation/jsr223/groovy/personal/**
-Core/automation/lib/python/personal/**
-Core/automation/lib/javascript/personal/**
-Core/automation/lib/groovy/personal/**
-Core/automation/lib/python/configuration.py
-Core/automation/jython/**
+automation/jsr223/python/personal/**
+automation/jsr223/javascript/personal/**
+automation/jsr223/groovy/personal/**
+automation/lib/python/personal/**
+automation/lib/javascript/personal/**
+automation/lib/groovy/personal/**
+automation/lib/python/configuration.py
+automation/jython/**
 
 # VSCode settings
 .vscode/
@@ -15,6 +15,22 @@ Core/automation/jython/**
 # Python Virtual Environment
 .venv
 
+
+# Standard OpenHAB configuration directories
+/js/**
+/items/**
+/persistence/**
+/sitemaps/**
+/misc/**
+/sounds/**
+/services/**
+/scripts/**
+/rules/**
 # Python Stubs
-Core/typings/*
-!Core/typings/core
+/typings/*
+!/typings/core
+/transform
+/html/**
+/icons/**
+/things/**
+/influxdb.persist
