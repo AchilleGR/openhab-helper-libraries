@@ -1,5 +1,6 @@
 *.py[cod]
 *$py.class
+.*.swp
 /automation/jsr223/python/personal/**
 /automation/jsr223/javascript/personal/**
 /automation/jsr223/groovy/personal/**

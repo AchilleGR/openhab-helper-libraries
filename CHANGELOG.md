@@ -3,6 +3,11 @@ Changes
 
 The original changelog before this fork is included in the file `CHANGELOG_ORIGINAL.md`
 
+Jul 5, 2024
+-----------
+- Added core.action library, API subject to change.
+- Added core.action.timers, a convienence interface over the Timer and ScriptExecution actions.
+
 Jul 4, 2024
 -----------
 - Fork of repository.
