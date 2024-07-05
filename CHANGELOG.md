@@ -10,3 +10,4 @@ Jul 4, 2024
 - Check cron expressions with CronAdjuster if it is available.
 - Completely removed the `set_uid_prefix` functionality. It does not make sense now that rule UIDs are intended to be immutable.
 - Exposed every available current action in actions.py. They are exposed in a dynamic way, so this should retain backwards compatibility.
+- Added core.util library, API subject to change.
