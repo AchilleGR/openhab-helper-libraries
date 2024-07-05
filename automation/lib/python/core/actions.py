@@ -76,6 +76,10 @@ except:
         Log = LogAction
 
 
+STATIC_IMPORTS.append(Log)
+STATIC_IMPORTS.append(LogAction)
+
+
 for action in STATIC_IMPORTS:
     name = str(action.simpleName)
     setattr(_MODULE, name, action)
