@@ -4,9 +4,6 @@ from core.jsr223.scope import items, itemRegistry, events
 from . import types
 
 
-ITEMS=items
-
-
 def all():
     return set(items.keys())
 
