@@ -38,32 +38,56 @@ try:
     from org.openhab.core.model.script.actions import Audio
     STATIC_IMPORTS.append(Audio)
 except:
-    pass
+    try:
+        from org.eclipse.smarthome.model.script.actions import Audio
+        STATIC_IMPORTS.append(Audio)
+    except:
+        pass
 try:
     from org.openhab.core.model.script.actions import BusEvent
     STATIC_IMPORTS.append(BusEvent)
 except:
-    pass
+    try:
+        from org.eclipse.smarthome.model.script.actions import BusEvent
+        STATIC_IMPORTS.append(BusEvent)
+    except:
+        pass
 try:
     from org.openhab.core.model.script.actions import CoreUtil
     STATIC_IMPORTS.append(CoreUtil)
 except:
-    pass
+    try:
+        from org.eclipse.smarthome.model.script.actions import CoreUtil
+        STATIC_IMPORTS.append(CoreUtil)
+    except:
+        pass
 try:
     from org.openhab.core.model.script.actions import Ephemeris
     STATIC_IMPORTS.append(Ephemeris)
 except:
-    pass
+    try:
+        from org.eclipse.smarthome.model.script.actions import Ephemeris
+        STATIC_IMPORTS.append(Ephemeris)
+    except:
+        pass
 try:
     from org.openhab.core.model.script.actions import Exec
     STATIC_IMPORTS.append(Exec)
 except:
-    pass
+    try:
+        from org.eclipse.smarthome.model.script.actions import Exec
+        STATIC_IMPORTS.append(Exec)
+    except:
+        pass
 try:
     from org.openhab.core.model.script.actions import HTTP
     STATIC_IMPORTS.append(HTTP)
 except:
-    pass
+    try:
+        from org.eclipse.smarthome.model.script.actions import HTTP
+        STATIC_IMPORTS.append(HTTP)
+    except:
+        pass
 try:
     from org.openhab.core.model.script.actions import Log
     LogAction = Log
@@ -82,42 +106,74 @@ try:
     from org.openhab.core.model.script.actions import Ping
     STATIC_IMPORTS.append(Ping)
 except:
-    pass
+    try:
+        from org.eclipse.smarthome.model.script.actions import Ping
+        STATIC_IMPORTS.append(Ping)
+    except:
+        pass
 try:
     from org.openhab.core.model.script.actions import ScriptExecution
     STATIC_IMPORTS.append(ScriptExecution)
 except:
-    pass
+    try:
+        from org.eclipse.smarthome.model.script.actions import ScriptExecution
+        STATIC_IMPORTS.append(ScriptExecution)
+    except:
+        pass
 try:
     from org.openhab.core.model.script.actions import Semantics
     STATIC_IMPORTS.append(Semantics)
 except:
-    pass
+    try:
+        from org.eclipse.smarthome.model.script.actions import Semantics
+        STATIC_IMPORTS.append(Semantics)
+    except:
+        pass
 try:
     from org.openhab.core.model.script.actions import Things
     STATIC_IMPORTS.append(Things)
 except:
-    pass
+    try:
+        from org.eclipse.smarthome.model.script.actions import Things
+        STATIC_IMPORTS.append(Things)
+    except:
+        pass
 try:
     from org.openhab.core.model.script.actions import Timer
     STATIC_IMPORTS.append(Timer)
 except:
-    pass
+    try:
+        from org.eclipse.smarthome.model.script.actions import Timer
+        STATIC_IMPORTS.append(Timer)
+    except:
+        pass
 try:
     from org.openhab.core.model.script.actions import Transformation
     STATIC_IMPORTS.append(Transformation)
 except:
-    pass
+    try:
+        from org.eclipse.smarthome.model.script.actions import Transformation
+        STATIC_IMPORTS.append(Transformation)
+    except:
+        pass
 try:
     from org.openhab.core.model.script.actions import TransformationException
     STATIC_IMPORTS.append(TransformationException)
 except:
-    pass
+    try:
+        from org.eclipse.smarthome.model.script.actions import TransformationException
+        STATIC_IMPORTS.append(TransformationException)
+    except:
+        pass
 try:
     from org.openhab.core.model.script.actions import Voice
     STATIC_IMPORTS.append(Voice)
 except:
-    pass
+    try:
+        from org.eclipse.smarthome.model.script.actions import Voice
+        STATIC_IMPORTS.append(Voice)
+    except:
+        pass
 
 
 STATIC_IMPORTS.append(Log)
