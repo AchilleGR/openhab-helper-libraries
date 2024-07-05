@@ -7,24 +7,17 @@ The rules module contains some utility functions and a decorator that can:
 """
 __all__ = [
     'rule',
-    'addRule'#,
-    # 'set_uid_prefix'
+    'addRule'
 ]
 
 from inspect import isclass
-# from java.util import UUID
-
-# try:
-#     from org.openhab.core.automation import Rule as SmarthomeRule
-# except:
-#     from org.eclipse.smarthome.automation import Rule as SmarthomeRule
-
 from core.log import getLogger, log_traceback
 from core.jsr223.scope import SimpleRule, scriptExtension
 
-LOG = getLogger("core.rules")
 
+LOG = getLogger("core.rules")
 scriptExtension.importPreset("RuleSimple")
+
 
 def rule(name=None, description=None, tags=None):
     """
@@ -57,7 +50,6 @@ def rule(name=None, description=None, tags=None):
                         self.name = "JSR223-Jython"
                 else:
                     self.name = name
-                # set_uid_prefix(self)
                 self.log = getLogger(self.name)
                 class_.__init__(self, *args, **kwargs)
                 if description is not None:
@@ -86,6 +78,7 @@ def rule(name=None, description=None, tags=None):
                 return None
     return rule_decorator
 
+
 class _FunctionRule(SimpleRule):
     def __init__(self, callback, triggers, name=None, description=None, tags=None):
         self.triggers = triggers
@@ -107,6 +100,7 @@ class _FunctionRule(SimpleRule):
     def execute(self, module, inputs):
         self.callback(inputs.get('event'))
 
+
 def addRule(new_rule):
     """
     This function adds a ``rule`` to openHAB's ``ruleRegistry``.
@@ -126,21 +120,3 @@ def addRule(new_rule):
     """
     LOG.debug(u"Added rule '{}'".format(new_rule.name))
     return scriptExtension.get("automationManager").addRule(new_rule)
-
-# def set_uid_prefix(new_rule, prefix=None):
-#     """
-#     This function changes the UID of a rule, with the option to include a
-#     specified text.
-
-#     .. warning:: This function needs some attention in order to work with the
-#         Automation API changes included in S1319.
-
-#     Args:
-#         new_rule (Rule): the rule to modify
-#         prefix (str): (optional) the text to include in the UID
-#     """
-#     if prefix is None:
-#         prefix = type(new_rule).__name__
-#     uid_field = type(SmarthomeRule).getClass(SmarthomeRule).getDeclaredField(SmarthomeRule, "uid")
-#     uid_field.setAccessible(True)
-#     uid_field.set(new_rule, "{}-{}".format(prefix, str(UUID.randomUUID())))
