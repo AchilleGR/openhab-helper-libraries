@@ -2,7 +2,7 @@ import uuid
 import random
 import contextlib
 import core.log
-import core.oh.rules
+import core.util.rules
 
 from . import log
 from . import utils
@@ -40,7 +40,7 @@ class RuleEngine(object):
                     return func()
             return outer
             
-        return lambda func: core.oh.rules.cron('%s * * ? * * *' % self.__seconds_index)(wrapper(func))
+        return lambda func: core.util.rules.cron('%s * * ? * * *' % self.__seconds_index)(wrapper(func))
 
     def every_day(self, hour, minute, trace=None):
         def wrapper(func):
@@ -49,7 +49,7 @@ class RuleEngine(object):
                     return func()
             return outer
             
-        return lambda func: core.oh.rules.rule('0 %s %s ? * * *' % (minute, hour))(wrapper(func))
+        return lambda func: core.util.rules.rule('0 %s %s ? * * *' % (minute, hour))(wrapper(func))
 
     def on_weekdays(self, hour, minute, trace=None):
         def wrapper(outer):
@@ -67,7 +67,7 @@ class RuleEngine(object):
                     return func()
             return outer
             
-        return lambda func: core.oh.rules.rule('0 %s %s ? * SAT,SUN *' % (minute, hour))(wrapper(func))
+        return lambda func: core.util.rules.rule('0 %s %s ? * SAT,SUN *' % (minute, hour))(wrapper(func))
 
     def on_change(self, prop, pass_context=False, null_context=False, trace=None):
         def wrapper(func):
@@ -76,7 +76,7 @@ class RuleEngine(object):
                     return func(*args)
             return outer
             
-        return lambda func: core.oh.rules.on_change(prop.item, pass_context, null_context)(wrapper(func))
+        return lambda func: core.util.rules.on_change(prop.item, pass_context, null_context)(wrapper(func))
 
     def on_command(self, prop, pass_context=False, trace=None):
         def wrapper(func):
@@ -85,7 +85,7 @@ class RuleEngine(object):
                     return func(*args)
             return outer
             
-        return lambda func: core.oh.rules.on_command(prop.item, pass_context)(wrapper(func))
+        return lambda func: core.util.rules.on_command(prop.item, pass_context)(wrapper(func))
 
     def on_update(self, prop, pass_context=False, trace=None):
         def wrapper(func):
@@ -94,4 +94,4 @@ class RuleEngine(object):
                     return func(*args)
             return outer
             
-        return lambda func: core.oh.rules.on_update(prop.item, pass_context)(wrapper(func))
+        return lambda func: core.util.rules.on_update(prop.item, pass_context)(wrapper(func))
