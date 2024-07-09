@@ -50,17 +50,20 @@ class _StartupTriggerHandlerFactory(TriggerHandlerFactory):
 
 def scriptLoaded(script):
     automationManager.addTriggerHandler(STARTUP_MODULE_ID, _StartupTriggerHandlerFactory())
-    LOG.info("TriggerHandler added '{}'".format(STARTUP_MODULE_ID))
+    if LOG:
+        LOG.info("TriggerHandler added '{}'".format(STARTUP_MODULE_ID))
 
     automationManager.addTriggerType(TriggerType(
         STARTUP_MODULE_ID, None,
         "System started or rule saved",
         "Triggers when the rule is added, which occurs when the system has started or the rule has been saved",
         None, Visibility.VISIBLE, None))
-    LOG.info("TriggerType added '{}'".format(STARTUP_MODULE_ID))
+    if LOG:
+        LOG.info("TriggerType added '{}'".format(STARTUP_MODULE_ID))
 
 
 def scriptUnloaded():
     automationManager.removeHandler(STARTUP_MODULE_ID)
     automationManager.removeModuleType(STARTUP_MODULE_ID)
-    LOG.info("TriggerType and TriggerHandler removed")
+    if LOG:
+        LOG.info("TriggerType and TriggerHandler removed")
