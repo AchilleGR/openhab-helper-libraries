@@ -35,6 +35,8 @@ try:
     LOG = getLogger("core.DirectoryEventTrigger")
 except:
     LOG = None
+    def log_traceback(func):
+        return func
 
 
 scriptExtension.importPreset("RuleSimple")
