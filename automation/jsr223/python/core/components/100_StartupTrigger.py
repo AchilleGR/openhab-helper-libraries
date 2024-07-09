@@ -6,17 +6,21 @@ scriptExtension.importPreset("RuleSimple")
 scriptExtension.importPreset("RuleSupport")
 scriptExtension.importPreset("RuleFactories")
 
-import core
-from core.log import getLogger
+
+STARTUP_MODULE_ID = "jsr223.StartupTrigger"
+try:
+    import core
+    core.STARTUP_MODULE_ID = STARTUP_MODULE_ID
+    from core.log import getLogger
+    LOG = getLogger("core.StartupTrigger")
+except:
+    LOG = None
+
 
 try:
     from org.openhab.core.automation.handler import TriggerHandler
 except:
     from org.eclipse.smarthome.automation.handler import TriggerHandler
-
-LOG = getLogger("core.StartupTrigger")
-
-core.STARTUP_MODULE_ID = "jsr223.StartupTrigger"
 
 
 class _StartupTriggerHandlerFactory(TriggerHandlerFactory):
@@ -45,18 +49,18 @@ class _StartupTriggerHandlerFactory(TriggerHandlerFactory):
 
 
 def scriptLoaded(script):
-    automationManager.addTriggerHandler(core.STARTUP_MODULE_ID, _StartupTriggerHandlerFactory())
-    LOG.info("TriggerHandler added '{}'".format(core.STARTUP_MODULE_ID))
+    automationManager.addTriggerHandler(STARTUP_MODULE_ID, _StartupTriggerHandlerFactory())
+    LOG.info("TriggerHandler added '{}'".format(STARTUP_MODULE_ID))
 
     automationManager.addTriggerType(TriggerType(
-        core.STARTUP_MODULE_ID, None,
+        STARTUP_MODULE_ID, None,
         "System started or rule saved",
         "Triggers when the rule is added, which occurs when the system has started or the rule has been saved",
         None, Visibility.VISIBLE, None))
-    LOG.info("TriggerType added '{}'".format(core.STARTUP_MODULE_ID))
+    LOG.info("TriggerType added '{}'".format(STARTUP_MODULE_ID))
 
 
 def scriptUnloaded():
-    automationManager.removeHandler(core.STARTUP_MODULE_ID)
-    automationManager.removeModuleType(core.STARTUP_MODULE_ID)
+    automationManager.removeHandler(STARTUP_MODULE_ID)
+    automationManager.removeModuleType(STARTUP_MODULE_ID)
     LOG.info("TriggerType and TriggerHandler removed")

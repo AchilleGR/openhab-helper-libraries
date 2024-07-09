@@ -27,12 +27,14 @@ except:
     from org.openhab.core.service import WatchServiceFactory
     BASE_CLASS = object
 
-import core
-from core.log import getLogger, log_traceback
-
-
-LOG = getLogger("core.DirectoryEventTrigger")
-core.DIRECTORY_TRIGGER_MODULE_ID = "jsr223.DirectoryEventTrigger"
+DIRECTORY_TRIGGER_MODULE_ID = "jsr223.DirectoryEventTrigger"
+try:
+    import core
+    core.DIRECTORY_TRIGGER_MODULE_ID = DIRECTORY_TRIGGER_MODULE_ID
+    from core.log import getLogger, log_traceback
+    LOG = getLogger("core.DirectoryEventTrigger")
+except:
+    LOG = None
 
 
 scriptExtension.importPreset("RuleSimple")
@@ -45,8 +47,10 @@ class JythonDirectoryWatcher(BASE_CLASS):
     def __init__(self, path, event_kinds=[ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY], watch_subdirectories=False):
         if BASE_CLASS is not object:
             BASE_CLASS.__init__(self, path)
+        else:
+            self.__path = path
+            self.__watcher = None
 
-        self.__watcher = None
         self.event_kinds = event_kinds
         self.watch_subdirectories = watch_subdirectories
         self.callback = None
@@ -60,10 +64,10 @@ class JythonDirectoryWatcher(BASE_CLASS):
         if BASE_CLASS is not object or self.__watcher is not None:
             return
         self.__watcher = WatchServiceFactory.createWatchService(
-            core.DIRECTORY_TRIGGER_MODULE_ID,
-            self.path
+            DIRECTORY_TRIGGER_MODULE_ID,
+            self.__path
         )
-        self.__watcher.registerListener(self, path, self.watch_subdirectories)
+        self.__watcher.registerListener(self, self.__path, self.watch_subdirectories)
 
     def getWatchEventKinds(self, path):
         return self.event_kinds
@@ -117,19 +121,22 @@ class _DirectoryEventTriggerHandlerFactory(TriggerHandlerFactory):
 
 def scriptLoaded(*args):
     automationManager.addTriggerHandler(
-        core.DIRECTORY_TRIGGER_MODULE_ID,
+        DIRECTORY_TRIGGER_MODULE_ID,
         _DirectoryEventTriggerHandlerFactory())
-    LOG.info("TriggerHandler added '{}'".format(core.DIRECTORY_TRIGGER_MODULE_ID))
+    if LOG:
+        LOG.info("TriggerHandler added '{}'".format(DIRECTORY_TRIGGER_MODULE_ID))
 
     automationManager.addTriggerType(TriggerType(
-        core.DIRECTORY_TRIGGER_MODULE_ID, None,
+        DIRECTORY_TRIGGER_MODULE_ID, None,
         "a directory change event is detected.",
         "Triggers when a directory change event is detected.",
         None, Visibility.VISIBLE, None))
-    LOG.info("TriggerType added '{}'".format(core.DIRECTORY_TRIGGER_MODULE_ID))
+    if LOG:
+        LOG.info("TriggerType added '{}'".format(DIRECTORY_TRIGGER_MODULE_ID))
 
 
 def scriptUnloaded():
-    automationManager.removeHandler(core.DIRECTORY_TRIGGER_MODULE_ID)
-    automationManager.removeModuleType(core.DIRECTORY_TRIGGER_MODULE_ID)
-    LOG.info("TriggerType and TriggerHandler removed '{}'".format(core.DIRECTORY_TRIGGER_MODULE_ID))
+    automationManager.removeHandler(DIRECTORY_TRIGGER_MODULE_ID)
+    automationManager.removeModuleType(DIRECTORY_TRIGGER_MODULE_ID)
+    if LOG:
+        LOG.info("TriggerType and TriggerHandler removed '{}'".format(DIRECTORY_TRIGGER_MODULE_ID))
