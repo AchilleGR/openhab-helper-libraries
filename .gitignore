@@ -8,7 +8,6 @@
 /automation/lib/javascript/personal/**
 /automation/lib/groovy/personal/**
 /automation/lib/python/configuration.py
-/automation/jython/**
 /automation/js/**
 /js/**
 !/automation/jsr223/python/personal/.gitkeep
