@@ -1,12 +1,3 @@
-import math
-
-from .. import device
-from . import sensor
-from . import dehumidifier
-from .. import utils
-from .. import manager
-        
-
 _DEFAULT_THERMOSTAT_MODES={
     'Off': 0, 
     'Heat': 1, 
@@ -27,99 +18,122 @@ _DEFAULT_THERMOSTAT_FAN_MODES={
 class Thermostat(object):
     collection='Builtin'
     name = 'Thermostat'
-    def __init__(self, 
-                 rule_engine,
-                 logger,
-                 **kwargs):
 
-        self.__manager = manager.Manager(
-            rule_engine=rule_engine,
-            logger=logger
+    def __init__(self, device, 
+                 sleeping=None, 
+                 away=None, 
+                 temperature_channel=None, 
+                 humidity_channel=None, 
+                 dehumidifier_energized=None, 
+                 fan_mode_channel=None, 
+                 setpoint_low_channel=None, 
+                 setpoint_high_channel=None, 
+                 portableac_energized=None, 
+                 mode_channel=None,
+                 auto_mode=None,
+                 overheat=None,
+                 overcool=None):
+
+        self.__overheat = overheat
+        self.__overcool = overcool
+        self.__logger = device.logger
+        self.__rule_engine = device.rule_engine
+
+        self.__group = device.group(
+            'Thermostat_' + device.room_name.replace(' ', '') + '_' + device.device_name.replace(' ', ''),
+            metadata={'ga': ('Thermostat', {
+                'name': device.device_name,
+                'roomHint': device.room_name,
+                'lang': 'en',
+                'useFahrenheit': True,
+                'thermostatModes': 'off=0,heat=1,cool=2,heatcool=3'
+            })}
         )
 
-        self.device = device.Device(
-            device_class=Thermostat, 
-            rule_engine=rule_engine,
-            logger=logger,
-            **kwargs
+        self.__temperature = device.property(
+            int, 'Temperature', default=0,
+            channel=temperature_channel,
+            groups=[self.__group.item],
+            metadata={'ga': ('thermostatTemperatureAmbient', {})}
         )
 
-        self.__logger = logger
-        self.__rule_engine = rule_engine
-
-        self.__temperature = sensor.Sensor(
-            device_class=Thermostat,
-            rule_engine=rule_engine,
-            property_name='Temperature',
-            logger=logger,
-            **kwargs
-        )
-
-        self.__humidity = sensor.Sensor(
-            device_class=Thermostat,
-            rule_engine=rule_engine,
-            property_name='Humidity',
-            logger=logger,
+        self.__humidity = device.property(
+            float, 'Humidity', default=0,
+            channel=humidity_channel,
+            groups=[self.__group.item],
             normalize=True,
-            **kwargs
+            metadata={'ga': ('thermostatHumidityAmbient', {})}
         )
 
         self.__modes = _DEFAULT_THERMOSTAT_MODES
         self.__fan_modes = _DEFAULT_THERMOSTAT_FAN_MODES
 
-        self.__mode = self.device.property(
-            'Mode', default=3.0
+        self.__mode = device.property(
+            int, 'Mode', default=3,
+            groups=[self.__group.item],
+            metadata={'ga': ('thermostatMode', {})}
         )
 
-        self.__fan_mode = self.device.property(
-            'FanMode', default=0.0
+        self.__fan_mode = device.property(
+            int, 'FanMode', default=6,
+            channel=fan_mode_channel
         )
 
-        self.__setpoint_low = self.device.property(
-            'SetpointLow', default=68.0
+        self.__setpoint_low = device.property(
+            int, 'SetpointLow', default=68.0,
+            groups=[self.__group.item],
+            metadata={'ga': ('thermostatTemperatureSetpointLow', {})}
         )
 
-        self.__setpoint_high = self.device.property(
-            'SetpointHigh', default=72.0
+        self.__setpoint_high = device.property(
+            int, 'SetpointHigh', default=72.0,
+            groups=[self.__group.item],
+            metadata={'ga': ('thermostatTemperatureSetpointHigh', {})}
         )
 
-        self.__real_setpoint_low = self.device.property(
-            'RealSetpointLow', default=68.0
+        self.__real_setpoint_low = device.property(
+            int, 'RealSetpointLow', default=68.0,
+            channel=setpoint_low_channel
         )
 
-        self.__real_setpoint_high = self.device.property(
-            'RealSetpointHigh', default=72.0
+        self.__real_setpoint_high = device.property(
+            int, 'RealSetpointHigh', default=72.0,
+            channel=setpoint_high_channel
         )
 
-        self.__setpoint = self.device.property(
-            'Setpoint', default=70.0
+        self.__setpoint = device.property(
+            int, 'Setpoint', default=70.0,
+            groups=[self.__group.item],
+            metadata={'ga': ('thermostatTemperatureSetpoint', {})}
         )
 
-        self.__real_setpoint = self.device.property(
-            'RealSetpoint', default=70.0
-        )
-        
-        self.__real_mode = self.device.property(
-            'RealMode', default=3.0
+        self.__real_mode = device.property(
+            int, 'RealMode', default=3,
+            channel=mode_channel
         )
 
-        self.__sleeping = device.State(
-            'Sleeping', 
-            rule_engine=rule_engine,
-            default=False
+        self.__sleeping = sleeping
+        self.__away = away
+        self.__dehumidifier_energized = dehumidifier_energized
+        self.__portableac_energized = portableac_energized
+        self.__auto_mode = auto_mode
+
+        device.rule_engine.loop()(self.__update)
+
+        self.__mode.on_change(
+            pass_context=True
+        ) (
+            self.__update_mode
         )
 
-        self.__away = device.State(
-            'Away', 
-            rule_engine=rule_engine,
-            default=False
-        )
+        if self.__auto_mode:
+            self.__auto_mode.on_change()(self.__update)
+        if self.__dehumidifier_energized:
+            self.__dehumidifier_energized.on_change()(self.__update)
+        if self.__portableac_energized:
+            self.__portableac_energized.on_change()(self.__update)
 
-        self.__dog_away = device.State(
-            'DogAway', 
-            rule_engine=rule_engine,
-            default=False
-        )
+        self.__update()
 
     def __mode_translate(self, mode_num, mode_defs):
         for mode, num in mode_defs.items():
@@ -136,6 +150,10 @@ class Thermostat(object):
     @mode.setter
     def mode(self, value):
         self.__mode_set(self.__mode, value, self.__modes)
+
+    @property
+    def mode_id(self):
+        return self.__mode
         
     @property
     def fan_mode(self):
@@ -164,6 +182,17 @@ class Thermostat(object):
             if values is not None:
                 self.__setpoint = values
 
+    def on_mode_change(*args, **kwargs):
+        self, args = args[0], args[1:]
+        return self.__mode.on_change(*args, **kwargs)
+
+    def on_operation_change(self, func):
+        self.__setpoint.on_change()(func)
+        self.__setpoint_low.on_change()(func)
+        self.__setpoint_high.on_change()(func)
+        self.__mode.on_change()(func)
+        return func
+
     @property
     def temperature(self):
         return self.__temperature.property
@@ -179,18 +208,6 @@ class Thermostat(object):
     @property
     def heating(self):
         return self.mode in ('Heat', 'HeatCool')
-
-    def register(self):
-        self.__temperature.register()
-        self.__humidity.register()
-
-        self.__rule_engine.loop()(self.__update)
-
-        self.__mode.on_change(
-            pass_context=True
-        ) (
-            self.__update_mode
-        )
 
     def __update_mode(self, old_mode, new_mode):
         old_mode = self.__mode_translate(old_mode, self.__modes)
@@ -219,35 +236,17 @@ class Thermostat(object):
 
     def operation(self, temperature=None):
         low, high = self.setpoint
-        if temperature is None:
-            temperature = self.__temperature.property.value
         mode = self.mode
-
-        if self.__away.value:
-            if mode in ('AwayHeat', 'AwayCool'):
-                if temperature >= 74.0:
-                    return low, high, 'AwayCool'
-                elif temperature <= 61.0:
-                    return low, high, 'AwayHeat'
+        if self.__auto_mode and self.__auto_mode.value:
+            if self.__sleeping and self.__sleeping.value:
+                return 65, 65, 65, 'HeatCool'
             else:
-                if temperature >= 70.0:
-                    return low, high, 'AwayCool'
-                else:
-                    return low, high, 'AwayHeat'
-
-        if self.__sleeping.value:
-            return 65, 65, 'HeatCool'
-        
-        return int(low), int(high), mode
-
+                return 70, 68, 72, 'HeatCool'
+        return int((low + high) / 2), int(low), int(high), mode
 
     def __update(self):
-        low, high = self.setpoint
-        temperature = self.__temperature.property.value
-        mode = self.mode
-
-        target_low, target_high, target_mode = self.operation(temperature)
-        target_setpoint = self.__setpoint.value
+        temperature = self.__temperature.value #* (9.0 / 5.0) + 32.0
+        target_setpoint, target_low, target_high, target_mode = self.operation(temperature)
 
         if target_mode in ('Heat', 'Cool'):
             self.__real_mode.value = self.__modes[target_mode]
@@ -259,25 +258,38 @@ class Thermostat(object):
         elif target_mode == 'Off':
             self.__real_mode.value = self.__modes['Off']
         elif target_mode == 'HeatCool':
-            #if temperature >= target_high + 2.0:
-            #    self.__real_mode.value = self.__modes['Cool']
-            #    self.__real_setpoint_high.value = target_high
-            #elif temperature <= target_low - 2.0:
-            #    self.__real_mode.value = self.__modes['Heat']
-            #    self.__real_setpoint_low.value = target_low
-            #else: 
-            self.__real_mode.value = self.__modes['HeatCool']
-            self.__real_setpoint_low.value = target_low
-            if target_low >= target_high:
-                self.__real_setpoint_high.value = target_low
-                self.__real_setpoint_low.value = target_low
-            else:
+            if temperature >= target_high + 2.0:
+                self.__real_mode.value = self.__modes['Cool']
                 self.__real_setpoint_high.value = target_high
+            elif temperature <= target_low - 2.0:
+                self.__real_mode.value = self.__modes['Heat']
                 self.__real_setpoint_low.value = target_low
+            else: 
+                self.__real_mode.value = self.__modes['HeatCool']
+                self.__real_setpoint_low.value = target_low
+                if target_low >= target_high:
+                    self.__real_setpoint_high.value = target_low
+                else:
+                    self.__real_setpoint_high.value = target_high
 
-        fan_mode = 'Auto' if 'Heat' in self.mode else 'Circulate'
-        for _, dehumid in self.__manager.devices_for(device_class=dehumidifier.Dehumidifier):
-            if dehumid.energized.value:
-                fan_mode = 'On'
+        fan_mode = 'Circulate'
+        if self.__dehumidifier_energized and self.__dehumidifier_energized.value:
+            fan_mode = 'On'
+        if self.__portableac_energized and self.__portableac_energized.value:
+            fan_mode = 'On'
 
         self.__fan_mode = fan_mode
+
+        if self.__overheat:
+            self.__overheat.value = 'Cool' in target_mode and temperature > target_high
+        if self.__overcool:
+            self.__overcool.value = 'Heat' in target_mode and temperature < target_low
+
+        if self.__auto_mode and self.__auto_mode.value:
+            self.__setpoint_low.update = self.__real_setpoint_low.value
+            self.__setpoint_high.update = self.__real_setpoint_high.value
+            if target_mode == 'Heat':
+                self.__setpoint.update = self.__real_setpoint_low.value
+            if target_mode == 'Cool':
+                self.__setpoint.update = self.__real_setpoint_high.value
+            self.__mode.update = self.__real_mode.value

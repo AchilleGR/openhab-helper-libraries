@@ -73,7 +73,7 @@ class BedJet(object):
     def __update_fan_speed(self):
 
         if self.__mode.value != 'AUTO':
-            self.__real_fan_speed = self.__fan_speed * 0.2
+            self.__real_fan_speed.value = self.__fan_speed.value * 0.2
             return
 
-        self.__real_fan_speed = 0.2
+        self.__real_fan_speed = 0.0

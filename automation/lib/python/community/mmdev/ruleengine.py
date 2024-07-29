@@ -3,6 +3,7 @@ import random
 import contextlib
 import core.log
 import core.util.rules
+from core.log import log_traceback
 
 from . import log
 from . import utils
@@ -34,64 +35,68 @@ class RuleEngine(object):
 
     def loop(self, trace=None):
         self.__seconds_index = (self.__seconds_index + 13) % 60
-        def wrapper(func):
-            def outer():
-                with self.__tracer(trace, 'Loop timer triggered'):
-                    return func()
-            return outer
-            
-        return lambda func: core.util.rules.cron('%s * * ? * * *' % self.__seconds_index)(wrapper(func))
+        def decorator(func):
+            func = log_traceback(func)
+            core.util.rules.cron('%s * * ? * * *' % self.__seconds_index)(func)
+            return func
+        return decorator
 
     def every_day(self, hour, minute, trace=None):
         def wrapper(func):
-            def outer():
+            @log_traceback
+            def outer(*args, **kwargs):
                 with self.__tracer(trace, 'Every day timer triggered'):
-                    return func()
+                    return func(*args, **kwargs)
             return outer
             
         return lambda func: core.util.rules.rule('0 %s %s ? * * *' % (minute, hour))(wrapper(func))
 
     def on_weekdays(self, hour, minute, trace=None):
         def wrapper(outer):
-            def outer():
+            @log_traceback
+            def outer(*args, **kwargs):
                 with self.__tracer(trace, 'Weekdays timer triggered'):
-                    return func()
+                    return func(*args, **kwargs)
             return outer
             
-        return lambda func: cpre.oh.rules.rule('0 %s %s ? * MON,TUE,WED,THU,FRI *' % (minute, hour))(wrapper(func))
+        return lambda func: core.oh.rules.rule('0 %s %s ? * MON,TUE,WED,THU,FRI *' % (minute, hour))(wrapper(func))
 
     def on_weekends(self, hour, minute, trace=None):
         def wrapper(func):
-            def outer():
+            @log_traceback
+            def outer(*args, **kwargs):
                 with self.__tracer(trace, 'Weekends timer triggered'):
-                    return func()
+                    return func(*args, **kwargs)
             return outer
             
         return lambda func: core.util.rules.rule('0 %s %s ? * SAT,SUN *' % (minute, hour))(wrapper(func))
 
     def on_change(self, prop, pass_context=False, null_context=False, trace=None):
         def wrapper(func):
-            def outer(*args):
+            @log_traceback
+            def outer(*args, **kwargs):
                 with self.__tracer(trace, 'Change watch triggered'):
-                    return func(*args)
+                    return func(*args, **kwargs)
             return outer
             
         return lambda func: core.util.rules.on_change(prop.item, pass_context, null_context)(wrapper(func))
 
     def on_command(self, prop, pass_context=False, trace=None):
         def wrapper(func):
-            def outer(*args):
+            @log_traceback
+            def outer(*args, **kwargs):
                 with self.__tracer(trace, 'Command watch triggered'):
-                    return func(*args)
+                    return func(*args, **kwargs)
             return outer
             
         return lambda func: core.util.rules.on_command(prop.item, pass_context)(wrapper(func))
 
     def on_update(self, prop, pass_context=False, trace=None):
         def wrapper(func):
-            def outer(*args):
+            @log_traceback
+            def outer(*args, **kwargs):
                 with self.__tracer(trace, 'Update watch triggered'):
-                    return func(*args)
+                    return func(*args, **kwargs)
             return outer
             
         return lambda func: core.util.rules.on_update(prop.item, pass_context)(wrapper(func))

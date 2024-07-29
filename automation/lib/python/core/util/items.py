@@ -1,28 +1,31 @@
 # Library for interacting with items in openhab.
 import core.log
-from core.jsr223.scope import items, itemRegistry, events
+from core.jsr223.scope import itemRegistry, events
 from . import types
+import time
 
 
-def all():
-    return set(items.keys())
+LOGGER = core.log.getLogger('ITEMS')
 
 
+@core.log.log_traceback
+def all_items():
+    return set(str(i.getName()) for i in itemRegistry.getItems())
+
+
+@core.log.log_traceback
 def exists(item_name):
-    return item_name in all()
+    return item_name in all_items()
 
 
+@core.log.log_traceback
 def value(item_name, default=None):
     if not exists(item_name):
         return default
     item_obj = itemRegistry.getItem(item_name)
-    if default is None:
-        return types.from_type(item_obj.state)
-    elif types.is_undefined(item_obj.state):
-        update(item_name, default, force=True)
+    if item_obj is None or types.is_undefined(item_obj.state):
         return default
-    else:
-        return types.from_type(item_obj.state)
+    return types.from_type(item_obj.state)
 
 
 def item_type(item_name):
@@ -34,7 +37,6 @@ def to_item_type(item_name, val):
     if val is None:
         return None
     item_obj = itemRegistry.getItem(item_name)
-    state = item_obj.getState()
     item_type = item_obj.type.split(':')[0]
 
     if item_type == 'Number':

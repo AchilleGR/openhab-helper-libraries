@@ -15,7 +15,7 @@ class Outlet(object):
 
         self.__power = self.device.property(
             'Power', 
-            default=False
+            default=True
         )
 
         self.__automatic_mode = self.device.property(
@@ -30,12 +30,12 @@ class Outlet(object):
 
         self.__automatic_power = self.device.property(
             'AutomaticPower', 
-            default=False
+            default=True
         )
 
         self.__energized = self.device.property(
             'Energized', 
-            default=False
+            default=True
         )
 
     @property

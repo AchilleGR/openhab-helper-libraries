@@ -3,63 +3,53 @@ from . import prop
 
 
 class Device(object):
-    def __init__(self, device_collection, device_class, device_name, room_name, logger=log.LOGGER, **kwargs):
+    def __init__(self, device_collection, device_class, device_name, room_name, rule_engine, logger=log.LOGGER):
         self.device_collection = device_collection
         self.device_class = device_class
         self.logger = logger
         self.room_name = room_name
         self.device_name = device_name
-        self.__property_args = kwargs
+        self.rule_engine = rule_engine
+        self.__items = set()
 
     @property
-    def item_basename(self):
-        return '%s_%s_%s' % (
-            self.device_class.name, 
-            self.room_name,
-            self.device_name
-        )
-    
-    @property
-    def properties(self):
-        prefix_name = '%s_' % self.item_basename
+    def items(self):
+        return self.__items
 
-        for item in sorted(items.keys()):
-            if item.startswith(prefix_name):
-                yield (
-                    item[prefix_name:], 
-                    self.__property(item[prefix_name:])
-                )
-
-    def property(self, property_name, default=None, force=False, normalize=False):
+    def property(self, property_type, property_name, channel=None, default=None, force=False, normalize=False, metadata=None, groups=None):
         if self.device_collection == 'Builtin':
             item = '%s_%s_%s_%s' % (
                 self.device_class.name,
-                self.room_name,
-                self.device_name,
+                self.room_name.replace(' ', ''),
+                self.device_name.replace(' ', ''),
                 property_name
             )
         else:
             item = '%s_%s_%s_%s_%s' % (
                 self.device_collection,
                 self.device_class.name,
-                self.room_name,
+                self.room_name.replace(' ', ''),
                 self.device_name,
                 property_name
             )
+        self.__items.add(item)
         return prop.Prop(
-            item,
+            property_type, item,
             default=default,
             logger=self.logger,
             force=force,
+            channel=channel,
             normalize=normalize,
-            **self.__property_args
+            metadata=metadata,
+            groups=groups,
+            rule_engine=self.rule_engine
         )
 
-def State(state_name, rule_engine, default=None, force=False, **kwargs):
-    return prop.Prop(
-        'State_%s' % state_name, 
-        rule_engine=rule_engine,
-        default=default,
-        force=force,
-        **kwargs
-    )
+    def group(self, group_name, metadata=None):
+        group_item = 'Group_' + group_name
+        self.__items.add(group_item)
+        return prop.Prop(
+            set, group_item,
+            metadata=metadata,
+            rule_engine=self.rule_engine
+        )

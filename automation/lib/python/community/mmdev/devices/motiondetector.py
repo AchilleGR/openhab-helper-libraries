@@ -1,36 +1,34 @@
 import time
 
-from .. import device
-
 
 class MotionDetector(object):
     collection='Builtin'
     name='MotionDetector'
-    def __init__(self, rule_engine, **kwargs):
-        dev = device.Device(
-            device_class=MotionDetector,
-            rule_engine=rule_engine,
-            **kwargs
+
+    def __init__(self, device,
+                 motion_detection_channel=None):
+
+        self.__last_detected = device.property(
+            int, 'LastDetected', default=0.0
         )
 
-        self.__last_detected = 0.0
-
-        self.__motion_detected = dev.property(
-            'MotionDetected', default=False
+        self.__motion_detected = device.property(
+            bool, 'MotionDetected', default=False
         )
 
-        self.__power = dev.property(
-            'Power', default=True
+        self.__power = device.property(
+            bool, 'Power', default=True
         )
 
-        self.__timeout = dev.property(
-            'Timeout', default=150.0
+        self.__timeout = device.property(
+            int, 'MotionTimeout', default=150.0
         )
 
-        self.__real_motion_detection = dev.property('RealMotionDetected')
-        self.__rule_engine = rule_engine
+        self.__real_motion_detection = device.property(
+            bool, 'RealMotionDetected', default=False,
+            channel=motion_detection_channel
+        )
 
-    def register(self):
         self.__real_motion_detection.on_change(
             pass_context=True
         ) (
@@ -41,7 +39,7 @@ class MotionDetector(object):
             self.__update
         )
         
-        self.__rule_engine.loop()(
+        device.rule_engine.loop()(
             self.__update
         )
 
@@ -59,10 +57,10 @@ class MotionDetector(object):
 
     def __motion_change(self, _, new):
         if new and self.powered.value:
-            self.__last_detected = time.time()
+            self.__last_detected.value = time.time()
             self.motion_detected.value = True
 
     def __update(self):
-        if time.time() - self.__last_detected > self.__timeout.value or not self.powered.value:
+        if time.time() - self.__last_detected.value > self.__timeout.value or not self.powered.value:
             self.motion_detected.value = False
 

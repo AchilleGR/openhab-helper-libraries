@@ -1,47 +1,38 @@
 import time
 
-from .. import device
-
 
 class Regulator(object):
     collection='Builtin'
     name='Regulator'
     def __init__(self,
-                 rule_engine,
+                 device,
+                 energized_channel,
                  cooldown_period=600.0, 
                  minimum_duty_period=600.0, 
                  window=0.05, 
                  default_setpoint=0.5, 
-                 inverted=False, 
-                 **kwargs):
+                 inverted=False):
 
-        self.__device = device.Device(
-            rule_engine=rule_engine,
-            **kwargs
+        self.__energized = device.property(
+            bool, 'RegulatorEnergized', 
+            default=False, channel=energized_channel
         )
 
-        self.__energized = self.__device.property(
-            'Energized', 
-            default=True
-        )
-
-        self.__power = self.__device.property(
-            'Power', 
-            default=True
-        )
+        self.__power = device.property(bool, 'RegulatorPower', default=False)
 
         self.__setpoint = 0.5
 
         self.__inverted = inverted
-        self.__last_transition = time.time()
         self.__cooldown_period=cooldown_period
         self.__minimum_duty_period = minimum_duty_period
         self.__window = window
         self.__desired = False
-        self.__rule_engine = rule_engine
+        self.__rule_engine = device.rule_engine
 
-    def register(self):
+        self.__last_transition = device.property(int, 'RegulatorLastTransition', default=time.time())
+
         self.__rule_engine.loop()(self.__update)
+        self.__update()
 
     def __update(self):
         target = self.__desired and self.__power.value
@@ -50,36 +41,31 @@ class Regulator(object):
 
         now = time.time()
         if target:
-            if now - self.__last_transition >= self.__cooldown_period:
-                self.__last_transition = now
+            if now - self.__last_transitionvalue >= self.__cooldown_period:
+                self.__last_transition.value = now
                 self.__energized.value = True
         else:
-            if now - self.__last_transition >= self.__minimum_duty_period:
-                self.__last_transition = now
+            if now - self.__last_transition.value >= self.__minimum_duty_period:
+                self.__last_transition.value = now
                 self.__energized.value = False
-
-
+        
     def hysterisis(self, value):
         if self.__setpoint == 0.0:
             self.__desired = False
+            self.__update()
             return
 
-        if not self.__inverted:
-            on = True
-            off = False
-            top = self.__setpoint
-            bottom = self.__setpoint - self.__window
+        if self.__inverted:
+            if value < self.__setpoint:
+                self.__desired = False
+            elif value >= self.__setpoint  - self.__window:
+                self.__desired = True
         else:
-            on = False
-            off = True
-            top = self.__setpoint + self.__window
-            bottom = self.__setpoint
+            if value > self.__setpoint:
+                self.__desired = False
+            elif value <= self.__setpoint  + self.__window:
+                self.__desired = True
 
-        if value > top:
-            self.__desired = off
-
-        elif value < bottom:
-            self.__desired = on
         self.__update()
 
     @property

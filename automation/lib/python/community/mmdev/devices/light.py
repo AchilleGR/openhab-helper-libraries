@@ -1,140 +1,67 @@
-from .. import device
+from core.jsr223.scope import QuantityType, events, itemRegistry
+from org.openhab.core.library.unit import Units
 
 
 class Light(object):
     collection='Builtin'
     name='Light'
-    def __init__(self, rule_engine, room_name, logger, **kwargs):
-        dev = device.Device(
-            rule_engine=rule_engine,
-            room_name=room_name,
-            device_class=Light,
-            logger=logger,
-            **kwargs
+
+    def __init__(self, device, 
+                 color_channel=None, 
+                 color_temperature_abs_channel=None, 
+                 motion_detection=None, 
+                 auto_mode=None,
+                 auto_temperature=None,
+                 auto_brightness=None,
+                 sleeping=None):
+
+        self.__real_color = device.property(
+            tuple, 'RealColor', default=(0,0,0), force=True, 
+            channel=color_channel
         )
 
-        self.__real_color = dev.property(
-            'RealColor', default=(1.0, 1.0, 1.0)
+        self.__device_name = device.device_name
+
+        self.__manual_color = device.property(
+            tuple, 'ManualColor', default=(0,0,0),
+            metadata={'ga': ('Light', {
+                'roomHint': device.room_name,
+                'name': device.device_name,
+                'colorTemperatureRange': '2000,6500'
+            })}
         )
 
-        self.__power = dev.property(
-            'Power', default=False
+        self.__real_color_temperature_abs = device.property(
+            int, 'RealColorTemperatureAbs', default=2000, force=True,
+            channel=color_temperature_abs_channel
         )
 
-        self.__state_color = dev.property(
-            'StateColor', default=(1.0, 1.0, 1.0)
+        self.__manual_color_temperature_abs = device.property(
+            int, 'ManualColorTemperatureAbs', default=2000, force=True
         )
 
-        self.__manual_color = dev.property(
-            'ManualColor', default=(1.0, 1.0, 1.0)
+        self.__manual_using_temp = device.property(
+            bool, 'ManualUsingTemp', default=True
         )
 
-        self.__motion_detection = dev.property(
-            'MotionDetection', default=False
-        )
+        self.__motion_detection = motion_detection
+        self.__auto_mode = auto_mode
+        self.__auto_temperature = auto_temperature
+        self.__auto_brightness = auto_brightness
+        self.__sleeping = sleeping
 
-        self.__automatic_color_temperature = dev.property(
-            'AutomaticColorTemperature', default=6500.0
-        )
-
-        self.__automatic_mode = dev.property(
-            'AutomaticMode', default=True
-        )
-
-        self.__real_color_temperature = dev.property(
-            'RealColorTemperature', force=True
-        )
-
-        self.__real_color_temperature_abs = dev.property(
-            'RealColorTemperatureAbs', force=True
-        )
-
-        self.__sleeping = device.State(
-            'Sleeping', 
-            rule_engine=rule_engine,
-            default=False
-        )
-
-        self.__away = device.State(
-            'Away', 
-            rule_engine=rule_engine,
-            default=False
-        )
-
-        self.__dog_away = device.State(
-            'DogAway', 
-            rule_engine=rule_engine,
-            default=False
-        )
-
-        self.__room_name = room_name
-        self.__automatic_mode.value = True
-        self.__logger = logger
+        self.__room_name = device.room_name
+        self.__logger = device.logger
         self.__off_trigger = False
 
-    @property
-    def manual_color(self):
-        return self.__manual_color
-
-    @property
-    def automatic_color_temperature(self):
-        return self.__automatic_color_temperature
-
-    @property
-    def motion_detection(self):
-        return self.__motion_detection
-
-    @property
-    def power(self):
-        return self.__power
-
-    @property
-    def automatic_mode(self):
-        return self.__automatic_mode
-
-    def __dog_away_change(self, _, dog_away):
-        if dog_away:
-            if self.__away.value:
-                self.__color_command(False)
-
-    def __away_change(self, _, away):
-        if away:
-            if self.__dog_away.value:
-                self.__color_command(False)
-            else:
-                if self.__room_name == 'Bedroom':
-                    self.__color_command(0.33)
-                    self.__color_command(True)
-                else:
-                    self.__color_command(False)
-                    self.__color_command(1.0)
-        else:
-            self.__color_command(1.0)
-            if self.__room_name == 'Bedroom':
-                self.__color_command(True)
-
-    def __sleeping_change(self, _, sleeping):
-        if sleeping:
-            if self.__room_name == 'Bathroom':
-                self.__color_command(0.6)
-                self.__color_command(True)
-            else:
-                self.__color_command(0.15)
-                if self.__room_name in ['Hallway', 'LivingRoom']:
-                    self.__color_command(True)
-                else:
-                    self.__color_command(False)
-        else:
-            self.__color_command(1.0)
-            if self.__room_name != 'Closet':
-                self.__color_command(True)
-
-    def register(self):
-        self.__state_color.on_change()(self.__update)
-        self.__power.on_change()(self.__update)
-        self.__motion_detection.on_change()(self.__update)
-        self.__automatic_color_temperature.on_change()(self.__update)
-        self.__automatic_mode.on_change()(self.__update)
+        if self.__motion_detection:
+            self.__motion_detection.on_command()(self.__update)
+        if self.__auto_temperature:
+            self.__auto_temperature.on_change()(self.__update)
+        if self.__auto_brightness:
+            self.__auto_brightness.on_change()(self.__update)
+        if self.__auto_mode:
+            self.__auto_mode.on_change()(self.__update)
 
         self.__manual_color.on_command(
             pass_context=True
@@ -142,64 +69,73 @@ class Light(object):
             self.__color_command
         )
 
-        self.__away.on_change(pass_context=True)(self.__away_change)
-        self.__sleeping.on_change(pass_context=True)(self.__sleeping_change)
-        self.__dog_away.on_change(pass_context=True)(self.__dog_away_change)
+        self.__update()
 
-    def __color_command(self, command):
+    def __color_command(self, command, update=False):
+        if not update:
+            if self.__auto_mode.value:
+                self.__manual_color.update = self.__real_color.value
+                self.__manual_color_temperature_abs.update = self.__real_color_temperature_abs.value
+                self.__manual_using_temp.update = True
+            self.__auto_mode.value = False
+
         if isinstance(command, tuple) or isinstance(command, list):
+            if not update:
+                self.__manual_using_temp.value = False
             new_h, new_s, _ = command
-            _, _, old_b = self.__state_color.value
-            if old_b <= 0.05:
-                self.__state_color.command((new_h, new_s, 0.05), force=True)
-            else:
-                self.__state_color.command((new_h, new_s, old_b), force=True)
-            if self.__sleeping.value:
-                self.__power.command(True, force=True)
-            else:
-                self.__automatic_mode.command(True, force=True)
+            _, _, old_b = self.__manual_color.value
+            self.__manual_color.value = (new_h, new_s, old_b)
 
         elif isinstance(command, float):
-            old_h, old_s, _ = self.__state_color.value
-            if command <= 0.05:
-                self.__state_color.command((old_h, old_s, 0.05), force=True)
-            else:
-                self.__state_color.command((old_h, old_s, command), force=True)
-            if self.__sleeping.value:
-                self.__power.command(True, force=True)
+            old_h, old_s, _ = self.__manual_color.value
+            self.__manual_color.value = (old_h, old_s, command)
 
         elif isinstance(command, bool):
-            if not command:
-                self.__off_trigger = True
-            self.__power.command(command, force=True)
+            old_h, old_s, _ = self.__manual_color.value
+            self.__manual_color.value = (old_h, old_s, 1.0 if command else 0.0)
+
+        self.__update()
 
     def __update(self):
-        motion_detection = self.__motion_detection.value
-        if not motion_detection:
-            self.__off_trigger = False
-
-        power = ((not self.__off_trigger) and motion_detection) or self.__power.value
-        self.__real_color.value = power
-        if power:
-            if self.__automatic_mode.value:
-
-                temp = self.automatic_color_temperature.value
-                if self.__real_color_temperature_abs.exists:
-                    if temp < 1201.0:
-                        temp = 1201.0
-                    elif temp > 6500.0:
-                        temp = 6500.0
-                    self.__real_color_temperature_abs.value = temp
-                    
-                else:
-                    if temp < 2000.0:
-                        perc = 1.0
-                    elif temp > 6500.0:
-                        perc = 0.01
-                    else:
-                        perc = 1.0 - ((temp - 2000.0) / (6500.0 - 2000.0))
-                    self.__real_color_temperature.value = perc
-
-                self.__real_color.value = self.__state_color.value[2]
+        if self.__auto_mode and self.__auto_mode.value:
+            if self.__auto_brightness:
+                brightness = max(0.01, self.__auto_brightness.value)
             else:
-                self.__real_color.value = self.__state_color.value
+                brightness = 1.0
+            if self.__room_name in ['Bathroom']:
+                if self.__sleeping and self.__sleeping.value:
+                    brightness=0.5
+                else:
+                    brightness=max(0.33,brightness)
+            if self.__auto_temperature:
+                temp = self.__auto_temperature.value
+            else:
+                temp = 6500
+            if temp < 2000.0:
+                temp = 2000.0
+            elif temp > 6500.0:
+                temp = 6500.0
+            
+            power = (
+                (self.__motion_detection and self.__motion_detection.value )
+                or (self.__sleeping and not self.__sleeping.value)
+                or self.__room_name in ['Bathroom']
+            )
+    
+            try:
+                events.sendCommand(itemRegistry.getItem(self.__real_color_temperature_abs.item), QuantityType(temp, Units.KELVIN))
+            except:
+                events.sendCommand(itemRegistry.getItem(self.__real_color_temperature_abs.item), QuantityType(max(2200, temp, Units.KELVIN)))
+
+            if power:
+                self.__real_color.value = brightness
+            else:
+                self.__real_color.value = False
+            self.__manual_color.update = self.__real_color.value
+            self.__manual_color_temperature_abs.update = self.__real_color_temperature_abs.value
+        else:
+            if self.__manual_using_temp:
+                self.__real_color_temperature_abs.value = self.__manual_color_temperature_abs.value
+            else:
+                self.__real_color.value = self.__manual_color.value
+
