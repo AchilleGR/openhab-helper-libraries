@@ -5,7 +5,8 @@ This module allows runtime creation and removal of links.
 __all__ = [
     "add_link",
     "remove_link",
-    "remove_all_links"
+    "remove_all_links",
+    "ITEM_CHANNEL_LINK_REGISTRY"
 ]
 
 try:

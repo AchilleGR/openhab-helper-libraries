@@ -33,6 +33,13 @@ def item_type(item_name):
     return item_obj.type.split(':')[0]
 
 
+def item_dimension(item_name):
+    item_obj = itemRegistry.getItem(item_name)
+    if ':' not in item_obj.type:
+        return None
+    return item_obj.type.split(':')[1]
+
+
 def to_item_type(item_name, val):
     if val is None:
         return None
