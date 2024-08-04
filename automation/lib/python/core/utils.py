@@ -20,22 +20,9 @@ __all__ = [
 import re
 import uuid
 
-try:
-    from org.eclipse.smarthome.core.types import TypeParser
-except:
-    from org.openhab.core.types import TypeParser
-
-try:
-    from org.openhab.core.thing import ChannelUID
-except:
-    from org.eclipse.smarthome.core.thing import ChannelUID
-
-try:
-    from org.joda.time import DateTime as JodaDateTime
-except:
-    JodaDateTime = None
-
-from java.time import ZonedDateTime
+from core.util.kwargs import parser as kwargs_parser
+from.core.loader import requires
+JodaDateTime = load('org.joda.time.DateTime')
 
 from core.date import to_java_zoneddatetime, to_joda_datetime
 from core.log import getLogger
@@ -86,6 +73,7 @@ def validate_channel_uid(channel_uid_or_string):
         ChannelUID or None: None, if the ChannelUID does not exist or the
         ChannelUID is not in a valid format, else validated ChannelUID
     """
+    ChannelUID = requires('org.openhab.core.thing.ChannelUID')
     channel_uid = channel_uid_or_string
     if isinstance(channel_uid_or_string, basestring):
         channel_uid = ChannelUID(channel_uid_or_string)
@@ -152,6 +140,7 @@ def post_update_if_different(item_or_item_name, new_value, sendACommand=False, f
     Returns:
         bool: ``True``, if the command or update was sent, else ``False``
     """
+    TypeParser = requires('org.openhab.core.types.TypeParser')
     compare_value = None
     item = itemRegistry.getItem(item_or_item_name) if isinstance(item_or_item_name, basestring) else item_or_item_name
 

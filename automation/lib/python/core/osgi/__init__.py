@@ -4,6 +4,7 @@ services.
 """
 __all__ = [
     'REGISTERED_SERVICES',
+    'org_eclipse_finder',
     'get_service',
     'find_services',
     'register_service',
@@ -20,7 +21,14 @@ REGISTERED_SERVICES = {}
 LOG = getLogger("core.osgi")
 
 
-def get_service(class_or_name):
+def org_eclipse_finder(class_or_name):
+    return get_service(
+        name.replace('org.openhab', 'eclipse.smarthome'),
+        finders=None
+    )
+
+
+def get_service(class_or_name, finders={org_eclipse_finder}):
     """
     This function gets the specified OSGi service.
 
@@ -31,6 +39,15 @@ def get_service(class_or_name):
     Returns:
         OSGi service or None: the requested OSGi service or None
     """
+    if len(finders) > 0:
+        service = get_service(class_or_name, loaders=set())
+        if service is not None:
+            return service
+        for loader in loaders:
+            service = suppress(lambda: loader(class_or_name))
+            if service is not None:
+                return service
+
     if BUNDLE_CONTEXT:
         classname = class_or_name.getName() if isinstance(class_or_name, type) else class_or_name
         ref = BUNDLE_CONTEXT.getServiceReference(classname)
@@ -84,8 +101,6 @@ def register_service(service, interface_names, properties=None):
     registered_service = BUNDLE_CONTEXT.registerService(interface_names, service, properties)
     for name in interface_names:
         REGISTERED_SERVICES[name] = (service, registered_service)
-    #LOG.debug("Registered service: {}".format(service))
-    #LOG.debug("REGISTERED_SERVICES: {}".format(REGISTERED_SERVICES))
     return registered_service
 
 

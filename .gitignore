@@ -1,3 +1,5 @@
+/config
+/config/**
 *.py[cod]
 *$py.class
 .*.swp
