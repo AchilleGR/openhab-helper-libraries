@@ -81,11 +81,10 @@ def Light(device):
             color.command = False
         elif automatic_color_temperature_mode.value:
             color.command = brightness
-            if color_temperature.exists:
-                events.sendCommand(
-                    itemRegistry.getItem(color_temperature.item), 
-                    QuantityType(max(2000, min(6500, automatic_color_temperature.value)), Units.KELVIN)
-                )
+            events.sendCommand(
+                itemRegistry.getItem(color_temperature.item), 
+                QuantityType(max(2000, min(6500, automatic_color_temperature.value)), Units.KELVIN)
+            )
             controls.update = color.value
         else:
             color.command = (h, s, brightness)
