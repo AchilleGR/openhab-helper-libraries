@@ -57,7 +57,7 @@ def Light(device):
     @automatic_color_temperature_mode.on_change()
     @motion_detected.on_change()
     @sleeping.on_change()
-    @device.rule_engine.loop()
+    @controls.on_change()
     def update():
         h, s, brightness = controls.value
 
